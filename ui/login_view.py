@@ -28,7 +28,7 @@ COLOR_2 = "#FFFFFF"
 COLOR_ROJO = "#FF4D6D"
 COLOR_VERDE = "#4DFFB4"
 
-FUENTE_TITULO = ("Courier New", 45, "bold")
+FUENTE_TITULO = ("Georgia", 45, "bold")
 FUENTE_LABEL = ("Courier New", 10, "bold")
 FUENTE_ENTRY = ("Courier New", 11)
 FUENTE_BTN = ("Courier New", 11, "bold")
@@ -57,15 +57,12 @@ class Main_Menu(tk.Frame):
 
         canvas.create_image(0, 0, anchor="nw", image=self.img_fondo)
 
-        #Titulo negro atras para sombra
-        canvas.create_text(452, 92, text="TOWER DEFENSE",
-                        font=FUENTE_TITULO, fill="black")
-
-        #Titulo encima encima
+        #Titulo
         canvas.create_text(450, 90, text="TOWER DEFENSE",
                         font=FUENTE_TITULO, fill=COLOR_1)
+        canvas.create_text(450, 140, text="Defensa y Asalto de Base",
+                           font=FUENTE_SMALL, fill=COLOR_2)
         
-
         #Panel de login
         panel = tk.Frame(self, bg=COLOR_PANEL, padx=36, pady=28,
                          highlightbackground=COLOR_1, highlightthickness=1)
@@ -105,7 +102,7 @@ class Main_Menu(tk.Frame):
         self.btn_main.grid(row=5, column=0, pady=(0, 8))
 
         #Cambiar a registro
-        self.btn_switch = tk.Button(panel, text="¿No tenés cuenta? Registrate",
+        self.btn_switch = tk.Button(panel, text="Don't have an account? Create one",
                                     font=FUENTE_SMALL, bg=COLOR_PANEL,
                                     fg=COLOR_2, relief="flat", cursor="hand2",
                                     command=self._cambiar_modo)
@@ -169,7 +166,7 @@ if __name__ == "__main__":
     root.resizable(False, False)
  
     # Acá cargás TODAS las imágenes, el root ya existe así que no explota
-    img_fondo = ImageTk.PhotoImage(Image.open(os.path.join(folder, "menu_bkg.png")).resize((900, 600)))
+    img_fondo = ImageTk.PhotoImage(Image.open(os.path.join(folder, "menu_bg_night.png")).resize((900, 600)))
  
     def cuando_entra(jugador):
         print("Jugador:", jugador)
