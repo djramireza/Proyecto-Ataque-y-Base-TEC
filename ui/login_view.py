@@ -2,12 +2,12 @@ import tkinter as tk
 import json
 import os
 from PIL import Image, ImageTk
+from constantes import *
 
 folder = os.path.dirname(__file__)
 
-#-------------------------------------------------------------------
+
 #Funciones de json de datos de registro y login (poner las de romu)
-#--------------------------------------------------------------------
 
 def mock_login(usuario, contrasena):
     return False, "Falta funcion de romu"
@@ -15,29 +15,7 @@ def mock_login(usuario, contrasena):
 def mock_registrar(usuario, contrasena):
     return False, "Falta funcion de romu"
 
-#---------------------------------------------
-#Colores y fuentes
-#---------------------------------------------
-
-COLOR_FONDO = "#0A1628"
-COLOR_PANEL = "#858585"
-COLOR_1 = "#fffc39"
-COLOR_1_HOV = "#D6C44CFF"
-COLOR_TEXTO = "#F0E6D3"
-COLOR_2 = "#FFFFFF"
-COLOR_ROJO = "#FF4D6D"
-COLOR_VERDE = "#4DFFB4"
-
-FUENTE_TITULO = ("Georgia", 45, "bold")
-FUENTE_LABEL = ("Courier New", 10, "bold")
-FUENTE_ENTRY = ("Courier New", 11)
-FUENTE_BTN = ("Courier New", 11, "bold")
-FUENTE_SMALL  = ("Courier New", 10)
-
-
-#---------------------------------------------
 #Pantalla login
-#---------------------------------------------
 
 modo = "login"  #variable global para saber si estamos en login o registro
  
@@ -110,7 +88,7 @@ def mostrar_login(root, img_fondo, on_success, numero_jugador=1):
             btn_switch.config(text="Already registered? Login")
         else:
             modo = "login"
-            lbl_titulo.config(text="LOG IN")
+            lbl_titulo.config(text=f"LOG IN - PLAYER {numero_jugador}")
             btn_main.config(text="ENTER")
             btn_switch.config(text="Don't have an account? Create one")
  
@@ -162,7 +140,6 @@ if __name__ == "__main__":
     root.resizable(False, False)
  
     img_fondo = ImageTk.PhotoImage(Image.open(os.path.join(folder, "menu_bg_night.png")).resize((900, 600)))
- 
     def cuando_entra(jugador):
         print("Jugador:", jugador)
  
