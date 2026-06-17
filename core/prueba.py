@@ -2,18 +2,18 @@ from entities import Tower, Unidad, Pared, Base
 from data_definitions import TOWERS_CATALOG, UNITS_CATALOG
 from combat import CombatEngine
  
-# Crear la base, ubicada en la casilla (9, 9)
-base = Base(hp=200, position=(9, 9))
+#Crear la base, ubicada en la casilla (9, 9)
+base = Base(hp=200, position=(9, 8))
  
-# Crear una torre básica, ubicada en (5, 5)
+#Crear una torre básica, ubicada en (5, 5)
 datos_torre = TOWERS_CATALOG["basica"]
 torre = Tower(**datos_torre)
-torre.position = (5, 5)
+torre.position = (5, 6)
  
-# Crear una unidad atacante (soldado), cerca de la torre
+#Crear una unidad atacante (soldado), cerca de la torre
 datos_unidad = UNITS_CATALOG["soldado"]
 unidad = Unidad(**datos_unidad)
-unidad.position = (5, 6)
+unidad.position = (5, 5)
  
 paredes = []
  

@@ -7,9 +7,9 @@ class Tower:
         self.daño = daño
         self.rango = rango
         self.habilidad = habilidad
-        self.cooldown = cooldown  # turnos para activar habilidad
+        self.cooldown = cooldown  #turnos para activar habilidad
         self.cooldown_actual = 0
-        self.position = None  # va a ser (fila, columna)
+        self.position = None  #va a ser (fila, columna)
  
     def esta_vivo(self):
         return self.hp > 0
@@ -49,7 +49,7 @@ class Unidad:
  
     def recibir_daño(self, cantidad):
         if self.shield_activo:
-            cantidad = cantidad // 2  # ejemplo de reducción por escudo
+            cantidad = cantidad // 2  #ejemplo de reducción por escudo
             self.shield_activo = False
         self.hp -= cantidad
         if self.hp < 0:
