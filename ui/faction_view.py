@@ -84,9 +84,12 @@ def mostrar_facciones(root, img_fondo, img_madagascar, img_argentina, img_india,
             color_fg = COLOR_2
             cursor_btn = "hand2"
 
+        def click_boton_faccion(n=nombre):
+            seleccionar(n)
+
         btn = tk.Button(frame, text="SELECT", font=FUENTE_BTN, bg=color_btn, fg=color_fg,
                          relief="flat", cursor=cursor_btn, width=12, pady=5,
-                         command=lambda n=nombre: seleccionar(n))
+                         command=click_boton_faccion)
         btn.place(x=x, y=430, anchor="center")
         botones[nombre] = btn
 
@@ -94,28 +97,3 @@ def mostrar_facciones(root, img_fondo, img_madagascar, img_argentina, img_india,
     btn_confirmar = tk.Button(frame, text="CONFIRM", font=FUENTE_BTN, bg=COLOR_1, fg="#0A1628",
                                relief="flat", cursor="hand2", width=20, pady=8, command=confirmar)
     btn_confirmar.place(x=450, y=490, anchor="center")
-
-
-# Prueba rápida de esta pantalla sola
-if __name__ == "__main__":
-    from PIL import Image, ImageTk
-    import os
-    folder = os.path.dirname(__file__)
-
-    root = tk.Tk()
-    root.title("Factions")
-    root.geometry("900x600")
-    root.resizable(False, False)
-
-    img_fondo = ImageTk.PhotoImage(Image.open(os.path.join(folder, "menu_bg_night.png")).resize((900, 600)))
-    img_madagascar = ImageTk.PhotoImage(Image.open(os.path.join(folder, "madagascar_fc.png")).resize((200, 200)))
-    img_argentina = ImageTk.PhotoImage(Image.open(os.path.join(folder, "argentina_fc.png")).resize((200, 200)))
-    img_india = ImageTk.PhotoImage(Image.open(os.path.join(folder, "india_fc.png")).resize((200, 200)))
-
-    def cuando_elige(faccion):
-        print("Faction chosen:", faccion)
-
-    mostrar_facciones(root, img_fondo, img_madagascar, img_argentina, img_india,
-                       numero_jugador=1, faccion_tomada=None, on_success=cuando_elige)
-
-    root.mainloop()

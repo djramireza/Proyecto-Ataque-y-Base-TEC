@@ -84,9 +84,12 @@ def mostrar_seleccion_rol(root, img_fondo, numero_jugador=1, rol_tomado=None, on
             color_fg = COLOR_2
             cursor_btn = "hand2"
 
+        def click_boton_rol(r=rol):
+            seleccionar(r)
+
         btn = tk.Button(frame, text="SELECT", font=FUENTE_BTN, bg=color_btn, fg=color_fg,
                          relief="flat", cursor=cursor_btn, width=14, pady=5,
-                         command=lambda r=rol: seleccionar(r))
+                         command=click_boton_rol)
         btn.place(x=x, y=370, anchor="center")
         botones[rol] = btn
 
@@ -94,24 +97,3 @@ def mostrar_seleccion_rol(root, img_fondo, numero_jugador=1, rol_tomado=None, on
     btn_confirmar = tk.Button(frame, text="CONFIRM", font=FUENTE_BTN, bg=COLOR_1, fg="#0A1628",
                                relief="flat", cursor="hand2", width=20, pady=8, command=confirmar)
     btn_confirmar.place(x=450, y=440, anchor="center")
-
-
-# Prueba rápida de esta pantalla sola
-if __name__ == "__main__":
-    from PIL import Image, ImageTk
-    import os
-    folder = os.path.dirname(__file__)
-
-    root = tk.Tk()
-    root.title("Roles")
-    root.geometry("900x600")
-    root.resizable(False, False)
-
-    img_fondo = ImageTk.PhotoImage(Image.open(os.path.join(folder, "menu_bg_night.png")).resize((900, 600)))
-
-    def cuando_elige(rol):
-        print("Role chosen:", rol)
-
-    mostrar_seleccion_rol(root, img_fondo, numero_jugador=1, rol_tomado=None, on_success=cuando_elige)
-
-    root.mainloop()

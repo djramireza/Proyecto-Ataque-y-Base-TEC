@@ -19,7 +19,11 @@ tipo_seleccionado = None
 objetos_colocados = []
 
 
-def mostrar_mapa_defensor(root, img_fondo, img_base, faccion, dinero_inicial, on_turno_listo):
+def mostrar_mapa_defensor(root, img_fondo, img_base, faccion, dinero_inicial, on_turno_listo,
+                           faccion_atacante=None,
+                           img_messi_arg=None, img_gustavo_arg=None, img_che_arg=None,
+                           img_pinguino_madag=None, img_moto_moto_madag=None, img_pinguino_negro_madag=None,
+                           img_tech_support_india=None, img_taxi_driver_india=None, img_scammer_india=None):
     global mapa, dinero_actual, tipo_seleccionado, objetos_colocados
 
     root.geometry(str(ANCHO_MAPA) + "x" + str(ALTO_MAPA))
@@ -135,13 +139,51 @@ def mostrar_mapa_defensor(root, img_fondo, img_base, faccion, dinero_inicial, on
             y1 = GRID_Y + f * CELDA
             canvas.create_rectangle(x1, y1, x1 + CELDA, y1 + CELDA, outline=COLOR_1, width=2, tags="hover")
 
+    def borrar_hover(event):
+        canvas.delete("hover")
+
     canvas.bind("<Motion>", hover_celda)
-    canvas.bind("<Leave>", lambda e: canvas.delete("hover"))
+    canvas.bind("<Leave>", borrar_hover)
 
     # Display de dinero (esquina superior izquierda)
     lbl_dinero = tk.Label(frame, text="$" + str(dinero_actual), font=("Courier New", 14, "bold"),
                            bg="#111111", fg=COLOR_1, padx=10, pady=5)
     lbl_dinero.place(x=10, y=10)
+
+    # Display de facción (igual que en la pantalla del atacante)
+    tk.Label(frame, text="Defender - " + faccion, font=("Courier New", 12, "bold"),
+              bg="#111111", fg=COLOR_VERDE, padx=10, pady=5).place(x=10, y=50)
+
+
+        #Preview de los personajes del atacante segun la faccion que eligio
+    if faccion_atacante == "Argentina":
+        img_enemigo_1 = img_messi_arg
+        img_enemigo_2 = img_gustavo_arg
+        img_enemigo_3 = img_che_arg
+    elif faccion_atacante == "Madagascar":
+        img_enemigo_1 = img_pinguino_madag
+        img_enemigo_2 = img_moto_moto_madag
+        img_enemigo_3 = img_pinguino_negro_madag
+    elif faccion_atacante == "India":
+        img_enemigo_1 = img_tech_support_india
+        img_enemigo_2 = img_taxi_driver_india
+        img_enemigo_3 = img_scammer_india
+    else:
+        img_enemigo_1 = None
+        img_enemigo_2 = None
+        img_enemigo_3 = None
+
+    tk.Label(frame, text="Enemy troops:", font=("Courier New", 9, "bold"),
+              bg="#111111", fg=COLOR_2, padx=8, pady=4).place(x=ANCHO_MAPA - 10, y=55, anchor="ne")
+
+
+    x_columna_enemigos = ANCHO_MAPA - 45
+    if img_enemigo_1:
+        canvas.create_image(x_columna_enemigos, 110, image=img_enemigo_1, tags="preview")
+    if img_enemigo_2:
+        canvas.create_image(x_columna_enemigos, 170, image=img_enemigo_2, tags="preview")
+    if img_enemigo_3:
+        canvas.create_image(x_columna_enemigos, 230, image=img_enemigo_3, tags="preview")
 
     # Panel de compra (gradas de abajo)
     Y_PANEL = GRID_Y + FILAS * CELDA + 8
@@ -176,12 +218,19 @@ def mostrar_mapa_defensor(root, img_fondo, img_base, faccion, dinero_inicial, on
                          cursor="hand2", width=9, pady=3)
         btn.place(x=x, y=Y_PANEL)
         botones_ref[tipo] = btn
-        btn.config(command=lambda t=tipo, b=btn: seleccionar_item(t, b))
+
+        def click_boton_item(t=tipo, b=btn):
+            seleccionar_item(t, b)
+
+        btn.config(command=click_boton_item)
 
     # Botón limpiar celda
+    def click_boton_limpiar():
+        seleccionar_item("limpiar", btn_limpiar)
+
     btn_limpiar = tk.Button(frame, text="Clear", font=FUENTE_SMALL, bg=COLOR_ROJO, fg="#FFFFFF",
                              relief="flat", cursor="hand2", width=9, pady=3,
-                             command=lambda: seleccionar_item("limpiar", btn_limpiar))
+                             command=click_boton_limpiar)
     btn_limpiar.place(x=x_inicio + len(items) * 120, y=Y_PANEL)
     botones_ref["limpiar"] = btn_limpiar
 
@@ -238,26 +287,3 @@ def mostrar_mapa_defensor(root, img_fondo, img_base, faccion, dinero_inicial, on
               command=terminar_turno).place(x=ANCHO_MAPA - 10, y=10, anchor="ne")
 
     dibujar_mapa()
-
-
-# Prueba rápida de esta pantalla sola
-if __name__ == "__main__":
-    from PIL import Image, ImageTk
-    import os
-    folder = os.path.dirname(__file__)
-
-    root = tk.Tk()
-    root.title("Defender Turn")
-    root.resizable(False, False)
-
-    img_fondo = ImageTk.PhotoImage(
-        Image.open(os.path.join(folder, "game_bg.png")).resize((ANCHO_MAPA, ALTO_MAPA), Image.LANCZOS)
-    )
-    img_base = None
-
-    def turno_listo(objetos):
-        print("Defender finished:", objetos)
-
-    mostrar_mapa_defensor(root, img_fondo=img_fondo, img_base=img_base,
-                           faccion="Argentina", dinero_inicial=200, on_turno_listo=turno_listo)
-    root.mainloop()

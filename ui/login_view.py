@@ -1,9 +1,5 @@
 import tkinter as tk
-import os
-from PIL import Image, ImageTk
 from constantes import *
-
-carpeta = os.path.dirname(__file__)
 
 # Variable global que dice si estamos en modo "login" o modo "registro"
 modo = "login"
@@ -91,7 +87,11 @@ def mostrar_login(root, img_fondo, on_success, numero_jugador=1):
             if ok:
                 lbl_msg.config(text="Welcome, " + usuario + "!", fg=COLOR_VERDE)
                 resultado["usuario"] = usuario
-                frame.after(600, lambda: on_success(resultado))
+
+                def avisar_login_exitoso():
+                    on_success(resultado)
+
+                frame.after(600, avisar_login_exitoso)
             else:
                 lbl_msg.config(text=resultado, fg=COLOR_ROJO)
         else:
@@ -113,20 +113,8 @@ def mostrar_login(root, img_fondo, on_success, numero_jugador=1):
     btn_switch.grid(row=6, column=0)
 
     # La tecla Enter también manda el formulario
-    root.bind("<Return>", lambda e: handle_btn())
+    def al_presionar_enter(evento):
+        handle_btn()
 
-
-# Prueba rápida de esta pantalla sola
-if __name__ == "__main__":
-    root = tk.Tk()
-    root.title("World Cup 2026 - Login")
-    root.geometry("900x600")
-    root.resizable(False, False)
-
-    img_fondo = ImageTk.PhotoImage(Image.open(os.path.join(carpeta, "menu_bg_night.png")).resize((900, 600)))
-
-    def cuando_entra(jugador):
-        print("Player:", jugador)
-
-    mostrar_login(root, img_fondo=img_fondo, on_success=cuando_entra, numero_jugador=1)
-    root.mainloop()
+    entry_usuario.bind("<Return>", al_presionar_enter)
+    entry_contra.bind("<Return>", al_presionar_enter)

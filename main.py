@@ -8,7 +8,12 @@ from PIL import Image, ImageTk
 UI_FOLDER = os.path.join(os.path.dirname(__file__), "ui")
 sys.path.insert(0, UI_FOLDER)
 
+# Todas las imagenes del juego estan guardadas en ui/imagenes
+IMAGENES_FOLDER = os.path.join(UI_FOLDER, "imagenes")
+
 from ui.constantes import *
+from ui.menu_view import mostrar_menu_principal
+from ui.leaderboard_view import mostrar_leaderboard
 from ui.login_view import mostrar_login
 from ui.role_view import mostrar_seleccion_rol
 from ui.faction_view import mostrar_facciones
@@ -150,18 +155,52 @@ def main():
     root.resizable(False, False)
     root.geometry(str(ANCHO) + "x" + str(ALTO))
 
-    img_menu_bg = ImageTk.PhotoImage(Image.open(os.path.join(UI_FOLDER, "menu_bg_night.png")).resize((ANCHO, ALTO)))
-    img_madagascar = ImageTk.PhotoImage(Image.open(os.path.join(UI_FOLDER, "madagascar_fc.png")).resize((200, 200)))
-    img_argentina = ImageTk.PhotoImage(Image.open(os.path.join(UI_FOLDER, "argentina_fc.png")).resize((200, 200)))
-    img_india = ImageTk.PhotoImage(Image.open(os.path.join(UI_FOLDER, "india_fc.png")).resize((200, 200)))
-    img_mapa_bg = ImageTk.PhotoImage(Image.open(os.path.join(UI_FOLDER, "game_bg.png")).resize((ANCHO_MAPA, ALTO_MAPA)))
+    img_menu_bg = ImageTk.PhotoImage(Image.open(os.path.join(IMAGENES_FOLDER, "menu_bg_night.png")).resize((ANCHO, ALTO)))
+    img_madagascar = ImageTk.PhotoImage(Image.open(os.path.join(IMAGENES_FOLDER, "madagascar_fc.png")).resize((200, 200)))
+    img_argentina = ImageTk.PhotoImage(Image.open(os.path.join(IMAGENES_FOLDER, "argentina_fc.png")).resize((200, 200)))
+    img_india = ImageTk.PhotoImage(Image.open(os.path.join(IMAGENES_FOLDER, "india_fc.png")).resize((200, 200)))
+    img_mapa_bg = ImageTk.PhotoImage(Image.open(os.path.join(IMAGENES_FOLDER, "game_bg.png")).resize((ANCHO_MAPA, ALTO_MAPA)))
+
+    # Imagenes de los personajes de cada faccion (se usan en defensa, ataque y combate)
+    # Son fotos en formato retrato, no cuadradas, asi que mantenemos su proporcion
+    # original y solo las achicamos a una altura fija para que no se vean estiradas.
+    img_messi_arg = ImageTk.PhotoImage(Image.open(os.path.join(IMAGENES_FOLDER, "messi_arg.png")).resize((41, 50)))
+    img_gustavo_arg = ImageTk.PhotoImage(Image.open(os.path.join(IMAGENES_FOLDER, "gustavo_arg.png")).resize((35, 50)))
+    img_che_arg = ImageTk.PhotoImage(Image.open(os.path.join(IMAGENES_FOLDER, "che_arg.png")).resize((26, 50)))
+
+    img_pinguino_madag = ImageTk.PhotoImage(Image.open(os.path.join(IMAGENES_FOLDER, "pengui_madag.png")).resize((39, 50)))
+    img_moto_moto_madag = ImageTk.PhotoImage(Image.open(os.path.join(IMAGENES_FOLDER, "moto_moto_madag.png")).resize((40, 50)))
+    img_pinguino_negro_madag = ImageTk.PhotoImage(Image.open(os.path.join(IMAGENES_FOLDER, "pingui_negro_madag.png")).resize((38, 50)))
+
+    img_tech_support_india = ImageTk.PhotoImage(Image.open(os.path.join(IMAGENES_FOLDER, "techsupport_india.png")).resize((36, 50)))
+    img_taxi_driver_india = ImageTk.PhotoImage(Image.open(os.path.join(IMAGENES_FOLDER, "taxi_driver_india.png")).resize((39, 50)))
+    img_scammer_india = ImageTk.PhotoImage(Image.open(os.path.join(IMAGENES_FOLDER, "scammer_india.png")).resize((35, 50)))
+
+    # Menu principal
+    def comenzar_juego():
+        iniciar_login(1)
+
+    def iniciar_menu():
+        limpiar_pantalla(root)
+        root.geometry(str(ANCHO) + "x" + str(ALTO))
+        mostrar_menu_principal(root, img_menu_bg, on_comenzar=comenzar_juego,
+                                on_ver_leaderboard=iniciar_leaderboard, on_salir=root.destroy)
+
+    def iniciar_leaderboard():
+        limpiar_pantalla(root)
+        root.geometry(str(ANCHO) + "x" + str(ALTO))
+        mostrar_leaderboard(root, img_menu_bg, on_volver=iniciar_menu)
 
     # Paso 1: login de los dos jugadores
     def iniciar_login(numero_jugador):
         limpiar_pantalla(root)
         root.geometry(str(ANCHO) + "x" + str(ALTO))
+
+        def cuando_login_exitoso(datos):
+            cuando_loguea(numero_jugador, datos)
+
         mostrar_login(root, img_menu_bg, numero_jugador=numero_jugador,
-                      on_success=lambda datos: cuando_loguea(numero_jugador, datos))
+                      on_success=cuando_login_exitoso)
 
     def cuando_loguea(numero_jugador, datos):
         global jugador1_usuario, jugador2_usuario
@@ -175,8 +214,12 @@ def main():
     # Paso 2: selección de rol
     def iniciar_rol(numero_jugador, rol_tomado=None):
         limpiar_pantalla(root)
+
+        def cuando_se_elige_rol(rol):
+            cuando_elige_rol(numero_jugador, rol)
+
         mostrar_seleccion_rol(root, img_menu_bg, numero_jugador=numero_jugador, rol_tomado=rol_tomado,
-                               on_success=lambda rol: cuando_elige_rol(numero_jugador, rol))
+                               on_success=cuando_se_elige_rol)
 
     def cuando_elige_rol(numero_jugador, rol):
         global jugador1_rol, jugador2_rol
@@ -190,9 +233,13 @@ def main():
     # Paso 3: selección de facción
     def iniciar_faccion(numero_jugador, faccion_tomada=None):
         limpiar_pantalla(root)
+
+        def cuando_se_elige_faccion(faccion):
+            cuando_elige_faccion(numero_jugador, faccion)
+
         mostrar_facciones(root, img_menu_bg, img_madagascar, img_argentina, img_india,
                            numero_jugador=numero_jugador, faccion_tomada=faccion_tomada,
-                           on_success=lambda faccion: cuando_elige_faccion(numero_jugador, faccion))
+                           on_success=cuando_se_elige_faccion)
 
     def cuando_elige_faccion(numero_jugador, faccion):
         global jugador1_faccion, jugador2_faccion
@@ -219,21 +266,45 @@ def main():
             faccion_atacante = jugador2_faccion
 
         limpiar_pantalla(root)
+
+        def cuando_defensa_lista(objetos):
+            cuando_termina_defensa(objetos, faccion_defensor, faccion_atacante)
+
         mostrar_mapa_defensor(root, img_mapa_bg, None, faccion_defensor,
                                dinero_inicial=DINERO_INICIAL,
-                               on_turno_listo=lambda objetos: cuando_termina_defensa(objetos, faccion_defensor, faccion_atacante))
+                               on_turno_listo=cuando_defensa_lista,
+                               faccion_atacante=faccion_atacante,
+                               img_messi_arg=img_messi_arg, img_gustavo_arg=img_gustavo_arg, img_che_arg=img_che_arg,
+                               img_pinguino_madag=img_pinguino_madag, img_moto_moto_madag=img_moto_moto_madag,
+                               img_pinguino_negro_madag=img_pinguino_negro_madag,
+                               img_tech_support_india=img_tech_support_india, img_taxi_driver_india=img_taxi_driver_india,
+                               img_scammer_india=img_scammer_india)
 
     def cuando_termina_defensa(objetos_defensa, faccion_defensor, faccion_atacante):
         limpiar_pantalla(root)
+
+        def cuando_ataque_listo(unidades):
+            cuando_termina_ataque(objetos_defensa, unidades, faccion_defensor, faccion_atacante)
+
         mostrar_mapa_atacante(root, img_mapa_bg, faccion_atacante, faccion_defensor,
                                dinero_inicial=DINERO_INICIAL,
-                               on_turno_listo=lambda unidades: cuando_termina_ataque(objetos_defensa, unidades, faccion_defensor, faccion_atacante))
+                               on_turno_listo=cuando_ataque_listo,
+                               img_messi_arg=img_messi_arg, img_gustavo_arg=img_gustavo_arg, img_che_arg=img_che_arg,
+                               img_pinguino_madag=img_pinguino_madag, img_moto_moto_madag=img_moto_moto_madag,
+                               img_pinguino_negro_madag=img_pinguino_negro_madag,
+                               img_tech_support_india=img_tech_support_india, img_taxi_driver_india=img_taxi_driver_india,
+                               img_scammer_india=img_scammer_india)
 
     def cuando_termina_ataque(objetos_defensa, unidades_ataque, faccion_defensor, faccion_atacante):
         # TODO: reemplazar por el motor real de core/combat.py cuando esté listo
         frames, resultado = simular_combate_temporal(objetos_defensa, unidades_ataque, faccion_atacante)
         limpiar_pantalla(root)
         mostrar_combate(root, img_mapa_bg, None, faccion_defensor, frames, resultado,
+                         img_messi_arg=img_messi_arg, img_gustavo_arg=img_gustavo_arg, img_che_arg=img_che_arg,
+                         img_pinguino_madag=img_pinguino_madag, img_moto_moto_madag=img_moto_moto_madag,
+                         img_pinguino_negro_madag=img_pinguino_negro_madag,
+                         img_tech_support_india=img_tech_support_india, img_taxi_driver_india=img_taxi_driver_india,
+                         img_scammer_india=img_scammer_india,
                          on_continuar=cuando_termina_combate)
 
     def cuando_termina_combate(resultado):
@@ -269,9 +340,9 @@ def main():
 
     def jugar_de_nuevo():
         reiniciar_partida()
-        iniciar_login(1)
+        iniciar_menu()
 
-    iniciar_login(1)
+    iniciar_menu()
     root.mainloop()
 
 

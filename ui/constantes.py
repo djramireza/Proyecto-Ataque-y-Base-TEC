@@ -67,11 +67,11 @@ FACCION_COLORES = {
         "torre_magica": "#F6B40E",
     },
     "India": {
-        "base": "#FF9933",
+        "base": "#EE532C",
         "muro": "#FFFFFF",
-        "torre_basica": "#138808",
+        "torre_basica": "#19A60C",
         "torre_pesada": "#FF9933",
-        "torre_magica": "#000080",
+        "torre_magica": "#EE532C",
     },
 }
 
