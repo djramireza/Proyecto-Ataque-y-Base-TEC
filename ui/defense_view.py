@@ -12,6 +12,18 @@ COSTO_MURO = 10
 
 NOMBRES_TIPO = {"basica": "Basic Tower", "pesada": "Heavy Tower", "magica": "Magic Tower", "muro": "Wall"}
 
+# Cuantos turnos de cooldown necesita cada torre para activar su habilidad.
+# El combate real (incluyendo cuando se activa cada habilidad) lo calcula
+# combat.py; esto solo se usa para mostrar la informacion en esta pantalla.
+COOLDOWN_MAXIMO = {"basica": 3, "pesada": 4, "magica": 5}
+
+# Texto corto que describe que hace la habilidad de cada torre
+HABILIDAD_TORRE = {
+    "basica": "double dmg \n on next hit",
+    "pesada": "+20% dm \n for 3 sec",
+    "magica": "heals ally \n to full hp",
+}
+
 # Variables globales con el estado de la pantalla de defensa
 mapa = []
 dinero_actual = 0
@@ -87,7 +99,7 @@ def mostrar_mapa_defensor(root, img_fondo, img_base, faccion, dinero_inicial, on
                     canvas.create_text(cx, cy, text="BAS", font=("Arial", 10, "bold"),
                                         fill=color_de_texto(fill), tags="mapa")
                 elif contenido == "pesada":
-                    canvas.create_text(cx, cy, text="PES", font=("Arial", 10, "bold"),
+                    canvas.create_text(cx, cy, text="HEAV", font=("Arial", 10, "bold"),
                                         fill=color_de_texto(fill), tags="mapa")
                 elif contenido == "magica":
                     canvas.create_text(cx, cy, text="MAG", font=("Arial", 10, "bold"),
@@ -184,6 +196,15 @@ def mostrar_mapa_defensor(root, img_fondo, img_base, faccion, dinero_inicial, on
         canvas.create_image(x_columna_enemigos, 170, image=img_enemigo_2, tags="preview")
     if img_enemigo_3:
         canvas.create_image(x_columna_enemigos, 230, image=img_enemigo_3, tags="preview")
+
+    # Panel con la informacion de la habilidad de cada tipo de torre
+    # (debajo de la vista previa del atacante, en el mismo margen de la derecha)
+    texto_habilidades = ("ABILITIES\n\n"
+                          "Basic:\n" + HABILIDAD_TORRE["basica"] + "\n\n"
+                          "Heavy:\n" + HABILIDAD_TORRE["pesada"] + "\n\n"
+                          "Magic:\n" + HABILIDAD_TORRE["magica"])
+    tk.Label(frame, text=texto_habilidades, font=("Courier New", 7, "bold"),
+              bg="#111111", fg=COLOR_2, justify="left", padx=3, pady=4).place(x=ANCHO_MAPA - 10, y=280, anchor="ne")
 
     # Panel de compra (gradas de abajo)
     Y_PANEL = GRID_Y + FILAS * CELDA + 8

@@ -17,7 +17,7 @@ from ui.leaderboard_view import mostrar_leaderboard
 from ui.login_view import mostrar_login
 from ui.role_view import mostrar_seleccion_rol
 from ui.faction_view import mostrar_facciones
-from ui.defense_view import mostrar_mapa_defensor, TORRES
+from ui.defense_view import mostrar_mapa_defensor, TORRES, COOLDOWN_MAXIMO
 from ui.atacker_view import mostrar_mapa_atacante, UNIDADES_POR_FACCION, ETIQUETAS
 from ui.combat_view import mostrar_combate
 
@@ -79,7 +79,11 @@ def simular_combate_temporal(objetos_defensa, unidades_ataque, faccion_atacante)
             muros.append({"posicion": o["posicion"], "hp": MURO_HP, "hp_max": MURO_HP})
         else:
             datos = TORRES[o["tipo"]]
-            torres.append({"tipo": o["tipo"], "posicion": o["posicion"], "hp": datos["hp"], "hp_max": datos["hp"]})
+            # "cooldown" cuenta los turnos hasta activar la habilidad de la torre.
+            # "lista" marca el turno exacto en el que la habilidad se activa
+            # (para que combat_view.py la haga "brillar" justo en ese frame).
+            torres.append({"tipo": o["tipo"], "posicion": o["posicion"], "hp": datos["hp"], "hp_max": datos["hp"],
+                           "cooldown": 0, "lista": False})
 
     unidades = []
     for u in unidades_ataque:
@@ -112,6 +116,21 @@ def simular_combate_temporal(objetos_defensa, unidades_ataque, faccion_atacante)
                     base_hp = base_hp - u["daño"]
                 else:
                     u["posicion"][1] = u["posicion"][1] + 1
+
+        # Cada turno, las torres con vida avanzan el cooldown de su habilidad.
+        # Cuando llega al maximo, se reinicia y se marca "lista" por un solo
+        # turno; eso es lo que hace que combat_view.py la muestre brillando.
+        for t in torres:
+            if t["hp"] <= 0:
+                t["lista"] = False
+                continue
+            maximo = COOLDOWN_MAXIMO[t["tipo"]]
+            t["cooldown"] = t["cooldown"] + 1
+            if t["cooldown"] >= maximo:
+                t["cooldown"] = 0
+                t["lista"] = True
+            else:
+                t["lista"] = False
 
         torres_copia = []
         for t in torres:

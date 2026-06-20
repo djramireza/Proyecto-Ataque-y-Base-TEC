@@ -1,10 +1,11 @@
 import tkinter as tk
 from constantes import *
+from defense_view import COOLDOWN_MAXIMO
 
 # Pantalla de combate.
 
 
-ETIQUETAS_TORRE = {"basica": "BAS", "pesada": "PES", "magica": "MAG"}
+ETIQUETAS_TORRE = {"basica": "BAS", "pesada": "HEAV", "magica": "MAG"}
 
 # Variables globales con el estado de la animación
 indice_frame_actual = 0
@@ -59,9 +60,6 @@ def mostrar_combate(root, img_fondo, img_base, faccion_defensor, frames, resulta
     lbl_base_hp = tk.Label(frame, font=("Courier New", 12, "bold"), bg="#111111", fg=COLOR_1, padx=10, pady=5)
     lbl_base_hp.place(x=10, y=10)
 
-    lbl_turno = tk.Label(frame, font=("Courier New", 11, "bold"), bg="#111111", fg=COLOR_2, padx=10, pady=5)
-    lbl_turno.place(x=10, y=50)
-
     def color_barra(ratio):
         if ratio > 0.5:
             return COLOR_VERDE
@@ -108,7 +106,10 @@ def mostrar_combate(root, img_fondo, img_base, faccion_defensor, frames, resulta
                                      fill=colores["base"], outline="#FFFFFF", tags="combate")
             canvas.create_text(cx, cy, text="BASE", font=("Arial", 10, "bold"),
                                 fill=color_de_texto(colores["base"]), tags="combate")
-        dibujar_barra_vida(cx, cy - CELDA // 2 - 12, snapshot.get("base_hp", 0), BASE_HP)
+        # La barrita de vida va PEGADA ARRIBA, DENTRO de la propia celda
+        # (si se dibuja flotando por encima, se mete en la celda de arriba
+        # y cuando esa celda se pinta, la tapa)
+        dibujar_barra_vida(cx, cy - CELDA // 2 + 3, snapshot.get("base_hp", 0), BASE_HP)
 
         # Muros
         for muro in snapshot.get("muros", []):
@@ -118,7 +119,7 @@ def mostrar_combate(root, img_fondo, img_base, faccion_defensor, frames, resulta
                                      fill=colores["muro"], outline="#FFFFFF", tags="combate")
             canvas.create_text(cx, cy, text="WALL", font=("Arial", 9, "bold"),
                                 fill=color_de_texto(colores["muro"]), tags="combate")
-            dibujar_barra_vida(cx, cy - CELDA // 2 - 10, muro["hp"], muro.get("hp_max", MURO_HP))
+            dibujar_barra_vida(cx, cy - CELDA // 2 + 3, muro["hp"], muro.get("hp_max", MURO_HP))
 
         # Torres
         for torre in snapshot.get("torres", []):
@@ -129,12 +130,40 @@ def mostrar_combate(root, img_fondo, img_base, faccion_defensor, frames, resulta
                 fill_torre = colores[clave]
             else:
                 fill_torre = COLOR_TORRE
+
+            # Si la habilidad de la torre se activo justo en este turno,
+            # la dibujamos con un borde grueso y brillante (el "parpadeo")
+            if torre.get("lista"):
+                borde_color = COLOR_1
+                borde_ancho = 4
+            else:
+                borde_color = "#FFFFFF"
+                borde_ancho = 1
+
             canvas.create_rectangle(cx - CELDA // 2, cy - CELDA // 2, cx + CELDA // 2, cy + CELDA // 2,
-                                     fill=fill_torre, outline="#FFFFFF", tags="combate")
+                                     fill=fill_torre, outline=borde_color, width=borde_ancho, tags="combate")
             etiqueta = ETIQUETAS_TORRE.get(torre["tipo"], "TOR")
             canvas.create_text(cx, cy, text=etiqueta, font=("Arial", 10, "bold"),
                                 fill=color_de_texto(fill_torre), tags="combate")
-            dibujar_barra_vida(cx, cy - CELDA // 2 - 10, torre["hp"], torre.get("hp_max", 100))
+
+            # La barrita de cooldown va primero (mas arriba) y la de vida
+            # debajo, las dos DENTRO de la celda de la torre. Si se dibujan
+            # flotando por encima de la celda, se meten en la celda de la
+            # torre de arriba y cuando esa se pinta, las tapa.
+            if "cooldown" in torre:
+                cooldown_max = COOLDOWN_MAXIMO[torre["tipo"]]
+                ancho_barra = 36
+                x1_b = cx - ancho_barra // 2
+                x2_b = cx + ancho_barra // 2
+                y_barra = cy - CELDA // 2 + 3
+                ancho_lleno = ancho_barra * torre["cooldown"] / cooldown_max
+
+                canvas.create_rectangle(x1_b, y_barra, x2_b, y_barra + 5,
+                                         fill="#222222", outline="#000000", tags="combate")
+                canvas.create_rectangle(x1_b, y_barra, x1_b + ancho_lleno, y_barra + 5,
+                                         fill=COLOR_VERDE, outline="", tags="combate")
+
+            dibujar_barra_vida(cx, cy - CELDA // 2 + 11, torre["hp"], torre.get("hp_max", 100))
 
         # Unidades
         for unidad in snapshot.get("unidades", []):
@@ -150,7 +179,7 @@ def mostrar_combate(root, img_fondo, img_base, faccion_defensor, frames, resulta
                                     fill=COLOR_UNIDAD, outline="#FFFFFF", tags="combate")
                 canvas.create_text(cx, cy, text=unidad.get("etiqueta", "UNI"), font=("Arial", 8, "bold"), tags="combate")
 
-            dibujar_barra_vida(cx, cy - CELDA // 2 - 10, unidad["hp"], unidad.get("hp_max", 100))
+            dibujar_barra_vida(cx, cy - CELDA // 2 + 3, unidad["hp"], unidad.get("hp_max", 100))
 
     def mostrar_resultado():
         global combate_terminado
@@ -201,7 +230,6 @@ def mostrar_combate(root, img_fondo, img_base, faccion_defensor, frames, resulta
         if hp_mostrar < 0:
             hp_mostrar = 0
         lbl_base_hp.config(text="Base HP: " + str(hp_mostrar) + "/" + str(BASE_HP))
-        lbl_turno.config(text="Combat turn " + str(indice_frame_actual + 1) + "/" + str(len(frames)))
 
         indice_frame_actual = indice_frame_actual + 1
         root.after(DURACION_FRAME_MS, siguiente_frame)
