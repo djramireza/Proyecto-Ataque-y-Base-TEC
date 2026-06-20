@@ -2,6 +2,8 @@ from entities import Tower, Unidad, Pared, Base
 from data_definitions import TOWERS_CATALOG, UNITS_CATALOG
 from combat import CombatEngine
 from economy import Economy, DINERO_INICIAL, DINERO_POR_RONDA, RONDAS_PARA_GANAR, HP_BASE, POSICION_BASE, COSTO_PARED, HP_PARED
+from mapa import Mapa  
+from data_manager import actualizar_victoria
 
 class Partida:
     def __init__(self, jugador_defensor, jugador_atacante):
@@ -13,6 +15,7 @@ class Partida:
         self.ronda_actual = 0
 
         self.base = Base(hp=HP_BASE, position=POSICION_BASE)
+        self.mapa = Mapa(posicion_base=POSICION_BASE)
         self.torres = []
         self.paredes = []
         self.unidades = []
@@ -20,6 +23,7 @@ class Partida:
         self.economy = Economy()
         self.dinero_defensor = self.economy.dinero_defensor  #referencia directa
         self.dinero_atacante = self.economy.dinero_atacante
+        self.victoria_registrada = False
 
     def iniciar_nueva_ronda(self):
         self.ronda_actual += 1
@@ -99,11 +103,25 @@ class Partida:
 
         return resultado
 
-    def hay_ganador_partida(self):
-        if self.rondas_defensor >= 3:
-            return self.jugador_defensor
-        if self.rondas_atacante >= 3:
+    def hay_ganador_partida(self):#devuelve el nombre del ganador si alguien llego a 3 rondas, o None si sigue el juego
+        if self.base.esta_destruida():
+            if not self.victoria_registrada:
+                actualizar_victoria(self.jugador_atacante, "atacante")
+                self.victoria_registrada = True
             return self.jugador_atacante
+    
+        if self.rondas_defensor >= RONDAS_PARA_GANAR:
+            if not self.victoria_registrada:
+                actualizar_victoria(self.jugador_defensor, "defensor")
+                self.victoria_registrada = True
+            return self.jugador_defensor
+
+        if self.rondas_atacante >= RONDAS_PARA_GANAR:
+            if not self.victoria_registrada:
+                actualizar_victoria(self.jugador_atacante, "atacante")
+                self.victoria_registrada = True
+            return self.jugador_atacante
+
         return None
     
     def obtener_catalogo_torres(self):

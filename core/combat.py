@@ -1,6 +1,6 @@
 from entities import Tower, Unidad, Pared, Base
  
-MAX_TURNOS = 4
+MAX_TURNOS = 3
  
  
 class CombatEngine:
@@ -54,15 +54,43 @@ class CombatEngine:
         for torre in self.towers:
             if not torre.esta_vivo():
                 continue
- 
+
+            if hasattr(torre, "turnos_boost_restantes") and torre.turnos_boost_restantes > 0:
+                torre.turnos_boost_restantes -= 1
+                if torre.turnos_boost_restantes == 0:
+                    torre.daño = int(torre.daño / 1.2)
+
             torre.avanzar_cooldown()
- 
+
             objetivo = self._buscar_unidad_en_rango(torre)
             if objetivo:
-                objetivo.recibir_daño(torre.daño)
- 
+                if torre.puede_usar_habilidad():
+                    self._usar_habilidad_torre(torre, objetivo)
+                    torre.resetear_cooldown()
+                else:
+                    objetivo.recibir_daño(torre.daño)
+
                 if not objetivo.esta_vivo():
                     self.dinero_defensor_ganado += self._valor_unidad(objetivo)
+
+    def _usar_habilidad_torre(self, torre, objetivo):
+        if torre.habilidad == "disparo_doble":
+        # Básica: dispara con el doble de daño en ese golpe
+            objetivo.recibir_daño(torre.daño * 2)
+
+        elif torre.habilidad == "boost_temporal":
+        # Pesada: sube su daño 20% por 3 turnos, luego vuelve a la normalidad
+            torre.daño = int(torre.daño * 1.2)
+            torre.turnos_boost_restantes = 3
+            objetivo.recibir_daño(torre.daño)
+
+        elif torre.habilidad == "curar_torre":
+        # Mágica: busca otra torre con HP menor al máximo y la cura al 100%
+            for otra_torre in self.towers:
+                if otra_torre is not torre and otra_torre.esta_vivo() and otra_torre.hp < otra_torre.max_hp:
+                    otra_torre.hp = otra_torre.max_hp
+                    break
+            objetivo.recibir_daño(torre.daño)
  
     def _fase_unidades(self):#cada unidad viva avanza, ataca torres/paredes en su camino, o daña la base
         for unidad in self.unidades:
@@ -73,17 +101,44 @@ class CombatEngine:
  
             objetivo = self._buscar_obstaculo_en_camino(unidad)
  
-            if objetivo is None:
-                self.base.recibir_daño(unidad.daño)
-                self.dinero_atacante_ganado += unidad.daño
+            if unidad.puede_usar_habilidad():
+                self._usar_habilidad_unidad(unidad, objetivo)
+                unidad.resetear_cooldown()
             else:
-                estaba_vivo_antes = self._esta_vivo(objetivo)
-                objetivo.recibir_daño(unidad.daño)
-                self.dinero_atacante_ganado += unidad.daño
+                self._atacar_normal(unidad, objetivo, unidad.daño)
+
  
-                if estaba_vivo_antes and not self._esta_vivo(objetivo):
-                    self.dinero_atacante_ganado += 20  # bonus por destruir torre o pared
+    def _usar_habilidad_unidad(self, unidad, objetivo):
+        if unidad.habilidad == "ataque_doble":
+            # Regular: ataca con el doble de daño
+            self._atacar_normal(unidad, objetivo, unidad.daño * 2)
  
+        elif unidad.habilidad == "escudo":#Heavy: activa escudo temporal (recibe la mitad del daño)
+            unidad.shield_activo = True
+            self._atacar_normal(unidad, objetivo, unidad.daño)
+ 
+        elif unidad.habilidad == "aumento_velocidad":
+            # Fast: ataca dos veces en el mismo turno
+            self._atacar_normal(unidad, objetivo, unidad.daño)
+            if unidad.esta_vivo():
+                self._atacar_normal(unidad, objetivo, unidad.daño)
+ 
+        else:
+            # fallback por si llega una habilidad no reconocida
+            self._atacar_normal(unidad, objetivo, unidad.daño)
+
+    def _atacar_normal(self, unidad, objetivo, daño):
+        if objetivo is None:#no hay obstaculo en el camino entonces daña la base directamente
+            self.base.recibir_daño(daño)
+            self.dinero_atacante_ganado += daño
+        else:
+            estaba_vivo_antes = self._esta_vivo(objetivo)
+            objetivo.recibir_daño(daño)
+            self.dinero_atacante_ganado += daño
+ 
+            if estaba_vivo_antes and not self._esta_vivo(objetivo):
+                self.dinero_atacante_ganado += 20
+
     def _todas_unidades_muertas(self):
         return all(not u.esta_vivo() for u in self.unidades)
  
