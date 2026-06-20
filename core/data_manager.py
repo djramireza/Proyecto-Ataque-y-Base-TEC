@@ -11,6 +11,7 @@ def cargar_jugadores():#lee el archivo JSON y devuelve un diccionario con todos 
  
  
 def guardar_jugadores(jugadores):#sobrescribe el archivo JSON con el diccionario actualizado
+    os.makedirs(os.path.dirname(PLAYERS_FILE), exist_ok=True)
     with open(PLAYERS_FILE, "w") as f:
         json.dump(jugadores, f, indent=4)
  

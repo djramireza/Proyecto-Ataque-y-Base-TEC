@@ -2,7 +2,6 @@ from entities import Tower, Unidad, Pared, Base
 from data_definitions import TOWERS_CATALOG, UNITS_CATALOG
 from combat import CombatEngine
 from economy import Economy, DINERO_INICIAL, DINERO_POR_RONDA, RONDAS_PARA_GANAR, HP_BASE, POSICION_BASE, COSTO_PARED, HP_PARED
-from mapa import Mapa  
 from data_manager import actualizar_victoria
 
 class Partida:
@@ -15,7 +14,6 @@ class Partida:
         self.ronda_actual = 0
 
         self.base = Base(hp=HP_BASE, position=POSICION_BASE)
-        self.mapa = Mapa(posicion_base=POSICION_BASE)
         self.torres = []
         self.paredes = []
         self.unidades = []
@@ -41,45 +39,45 @@ class Partida:
             return None, "Tipo de torre no existe"
  
         datos = TOWERS_CATALOG[tipo]
-        if self.dinero_defensor < datos["costo"]:
+        if self.dinero_defensor < datos["coste"]:
             return None, "No tienes suficiente dinero"
- 
+
         if not self._posicion_libre(posicion):
             return None, "Esa posición ya está ocupada"
- 
+
         torre = Tower(**datos)
         torre.position = posicion
         self.torres.append(torre)
-        self.dinero_defensor -= datos["costo"]
+        self.dinero_defensor -= datos["coste"]
         return torre, f"Torre {torre.nombre} comprada"
 
     def comprar_pared(self, posicion):
         #crea una pared con costo y HP fijos
         if self.dinero_defensor < COSTO_PARED:
             return None, "No tienes suficiente dinero"
- 
+
         if not self._posicion_libre(posicion):
             return None, "Esa posición ya está ocupada"
- 
-        pared = Pared(costo=COSTO_PARED, hp=HP_PARED)
+
+        pared = Pared(coste=COSTO_PARED, hp=HP_PARED)
         pared.position = posicion
         self.paredes.append(pared)
         self.dinero_defensor -= COSTO_PARED
         return pared, "Pared comprada"
-    
+
     def comprar_unidad(self, tipo, posicion):
         #crea una unidad del tipo indicado y la coloca en la posicion dada
         if tipo not in UNITS_CATALOG:
             return None, "Tipo de unidad no existe"
- 
+
         datos = UNITS_CATALOG[tipo]
-        if self.dinero_atacante < datos["costo"]:
+        if self.dinero_atacante < datos["coste"]:
             return None, "No tienes suficiente dinero"
- 
+
         unidad = Unidad(**datos)
         unidad.position = posicion
         self.unidades.append(unidad)
-        self.dinero_atacante -= datos["costo"]
+        self.dinero_atacante -= datos["coste"]
         return unidad, f"Unidad {unidad.nombre} comprada"
 
     def ejecutar_combate(self):
@@ -89,7 +87,7 @@ class Partida:
             unidades=self.unidades,
             base=self.base,
         )
-        resultado = motor.ejecutar_ronda()
+        frames, resultado = motor.ejecutar_ronda()
 
         #repartir dinero ganado durante el combate
         self.dinero_defensor += resultado["dinero_defensor"]
@@ -101,7 +99,7 @@ class Partida:
         else:
             self.rondas_atacante += 1
 
-        return resultado
+        return frames, resultado
 
     def hay_ganador_partida(self):#devuelve el nombre del ganador si alguien llego a 3 rondas, o None si sigue el juego
         if self.base.esta_destruida():
