@@ -75,7 +75,7 @@ def mostrar_facciones(root, img_fondo, img_madagascar, img_argentina, img_india,
         canvas.create_text(x, 385, text=nombre, font=FUENTE_BTN, fill=color_texto)
 
         if tomada:
-            canvas.create_text(x, 410, text="TAKEN", font=FUENTE_SMALL, fill=COLOR_ROJO)
+            canvas.create_text(x, 400, text="TAKEN", font=FUENTE_SMALL, fill=COLOR_ROJO)
             color_btn = "#444444"
             color_fg = "#888888"
             cursor_btn = "arrow"

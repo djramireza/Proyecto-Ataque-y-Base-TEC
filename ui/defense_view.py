@@ -1,21 +1,26 @@
 import tkinter as tk
 from constantes import *
+from core.data_definitions import TOWERS_CATALOG
+from core.economy import COSTO_PARED
 
-# Catálogo de torres y muro
-# Cuando Romu conecte el core, estos datos se reemplazan por los del core/economy.py
-TORRES = {
-    "basica": {"nombre": "Basic Tower", "costo": 50, "hp": 100, "daño": 10, "rango": 3, "img": None},
-    "pesada": {"nombre": "Heavy Tower", "costo": 150, "hp": 250, "daño": 25, "rango": 2, "img": None},
-    "magica": {"nombre": "Magic Tower", "costo": 120, "hp": 80, "daño": 5, "rango": 4, "img": None},
-}
-COSTO_MURO = 10
-
+# Catálogo de torres y muro.
+# hp/daño/rango/cooldown vienen de core/data_definitions.py (el mismo catalogo que usa
+# el motor de combate real), asi que lo que se ve en pantalla coincide con lo que pasa
+# en el combate. "nombre" e "img" son solo cosas visuales de esta pantalla.
 NOMBRES_TIPO = {"basica": "Basic Tower", "pesada": "Heavy Tower", "magica": "Magic Tower", "muro": "Wall"}
 
-# Cuantos turnos de cooldown necesita cada torre para activar su habilidad.
-# El combate real (incluyendo cuando se activa cada habilidad) lo calcula
-# combat.py; esto solo se usa para mostrar la informacion en esta pantalla.
-COOLDOWN_MAXIMO = {"basica": 3, "pesada": 4, "magica": 5}
+TORRES = {}
+for _tipo, _datos in TOWERS_CATALOG.items():
+    TORRES[_tipo] = {"nombre": NOMBRES_TIPO[_tipo], "costo": _datos["coste"], "hp": _datos["hp"],
+                      "daño": _datos["daño"], "rango": _datos["rango"], "img": None}
+
+COSTO_MURO = COSTO_PARED
+
+# Cuantos turnos de cooldown necesita cada torre para activar su habilidad
+# (mismo valor que usa el motor de combate real en core/data_definitions.py).
+COOLDOWN_MAXIMO = {}
+for _tipo, _datos in TOWERS_CATALOG.items():
+    COOLDOWN_MAXIMO[_tipo] = _datos["cooldown"]
 
 # Texto corto que describe que hace la habilidad de cada torre
 HABILIDAD_TORRE = {
@@ -301,7 +306,7 @@ def mostrar_mapa_defensor(root, img_fondo, img_base, faccion, dinero_inicial, on
 
     # Botón terminar turno
     def terminar_turno():
-        on_turno_listo(objetos_colocados)
+        on_turno_listo(objetos_colocados, dinero_actual)
 
     tk.Button(frame, text="End Turn", font=FUENTE_BTN, bg=COLOR_VERDE, fg="#0A1628",
               relief="flat", cursor="hand2", padx=15, pady=5,

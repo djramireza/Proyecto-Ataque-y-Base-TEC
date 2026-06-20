@@ -1,25 +1,14 @@
 import tkinter as tk
 from constantes import *
+from core.data_manager import obtener_top_jugadores
 
 # Pantalla del leaderboard, muestra los 5 con mas victorias como defensor
 # y los 5 con mas victorias como atacante
 
-# Datos de ejemplo hasta que Romu conecte esto con core/data_manager.py
-def mock_obtener_leaderboard():
-    defensores = [
-        ("Gabo", 14),
-        ("Romu", 11),
-        ("Messi10", 9),
-        ("ElChe", 7),
-        ("Cerati", 5),
-    ]
-    atacantes = [
-        ("MotoMoto", 16),
-        ("Scammer", 12),
-        ("TaxiDriver", 10),
-        ("Pinguino", 8),
-        ("Gabo", 6),
-    ]
+
+def obtener_leaderboard():
+    defensores = obtener_top_jugadores("defensor")
+    atacantes = obtener_top_jugadores("atacante")
     return {"defensores": defensores, "atacantes": atacantes}
 
 
@@ -33,7 +22,7 @@ def mostrar_leaderboard(root, img_fondo, on_volver=None):
 
     canvas.create_text(450, 80, text="LEADERBOARD", font=FUENTE_TITULO, fill=COLOR_1)
 
-    datos = mock_obtener_leaderboard()
+    datos = obtener_leaderboard()
 
     def dibujar_tabla(titulo, lista, x):
         panel = tk.Frame(frame, bg=COLOR_PANEL, padx=24, pady=20,
@@ -50,7 +39,9 @@ def mostrar_leaderboard(root, img_fondo, on_volver=None):
 
         fila = 1
         puesto = 1
-        for nombre, victorias in lista[:5]:
+        for jugador in lista[:5]:
+            nombre = jugador["username"]
+            victorias = jugador["victorias"]
             tk.Label(panel, text=str(puesto) + ". " + nombre, font=FUENTE_SMALL,
                      bg=COLOR_PANEL, fg=COLOR_2, width=16, anchor="w").grid(row=fila, column=0, sticky="w", pady=2)
             tk.Label(panel, text=str(victorias) + " wins", font=FUENTE_SMALL,

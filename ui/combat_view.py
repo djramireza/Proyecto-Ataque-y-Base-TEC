@@ -172,11 +172,21 @@ def mostrar_combate(root, img_fondo, img_base, faccion_defensor, frames, resulta
             tipo_unidad = unidad.get("tipo")
             imagen_unidad = imagen_de_unidad(tipo_unidad)
 
+            # Si la unidad activo su habilidad justo en este turno, tiene borde que brilla
+            if unidad.get("lista"):
+                borde_color = COLOR_1
+                borde_ancho = 3
+            else:
+                borde_color = "#FFFFFF"
+                borde_ancho = 1
+
             if imagen_unidad:
+                canvas.create_rectangle(cx - CELDA // 2 + 2, cy - CELDA // 2 + 2, cx + CELDA // 2 - 2, cy + CELDA // 2 - 2,
+                                         outline=borde_color, width=borde_ancho, tags="combate")
                 canvas.create_image(cx, cy, image=imagen_unidad, tags="combate")
             else:
                 canvas.create_oval(cx - CELDA // 2 + 4, cy - CELDA // 2 + 4, cx + CELDA // 2 - 4, cy + CELDA // 2 - 4,
-                                    fill=COLOR_UNIDAD, outline="#FFFFFF", tags="combate")
+                                    fill=COLOR_UNIDAD, outline=borde_color, width=borde_ancho, tags="combate")
                 canvas.create_text(cx, cy, text=unidad.get("etiqueta", "UNI"), font=("Arial", 8, "bold"), tags="combate")
 
             dibujar_barra_vida(cx, cy - CELDA // 2 + 3, unidad["hp"], unidad.get("hp_max", 100))

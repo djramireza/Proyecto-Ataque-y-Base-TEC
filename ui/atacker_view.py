@@ -1,37 +1,58 @@
 import tkinter as tk
 from constantes import *
+from core.data_definitions import UNITS_CATALOG
 
 # Pantalla de selección y compra de unidades del atacante
 
-# Catálogo de unidades por facción.
-# Cada unidad tiene: nombre, costo, hp (vida), daño y velocidad.
-# Las unidades estan agrupadas en 3 tipos segun sus estadisticas:
-# Regular: vida normal, daño normal, velocidad normal
-# Rapida: menos vida, menos daño, pero muy rapida
-# Pesada: mas vida, mas daño, pero mas lenta
-UNIDADES_POR_FACCION = {
-    "Madagascar": {
-        "pinguino": {"nombre": "Penguin", "tipo_tropa": "regular", "costo": 70, "hp": 100, "daño": 15, "velocidad": 1},
-        "moto_moto": {"nombre": "Moto Moto", "tipo_tropa": "pesada", "costo": 110, "hp": 180, "daño": 25, "velocidad": 0.5},
-        "pinguino_negro": {"nombre": "Black Penguin", "tipo_tropa": "rapida", "costo": 50, "hp": 60, "daño": 8, "velocidad": 2.5},
-    },
-    "Argentina": {
-        "messi": {"nombre": "Messi", "tipo_tropa": "rapida", "costo": 50, "hp": 60, "daño": 8, "velocidad": 2.5},
-        "cerati": {"nombre": "Gustavo Cerati", "tipo_tropa": "regular", "costo": 70, "hp": 100, "daño": 15, "velocidad": 1},
-        "che": {"nombre": "El Che", "tipo_tropa": "pesada", "costo": 110, "hp": 180, "daño": 25, "velocidad": 0.5},
-    },
-    "India": {
-        "tech_support": {"nombre": "Tech Support", "tipo_tropa": "pesada", "costo": 110, "hp": 180, "daño": 25, "velocidad": 0.5},
-        "taxi_driver": {"nombre": "Taxi Driver", "tipo_tropa": "rapida", "costo": 50, "hp": 60, "daño": 8, "velocidad": 2.5},
-        "scammer": {"nombre": "Scammer", "tipo_tropa": "regular", "costo": 70, "hp": 100, "daño": 15, "velocidad": 1},
-    },
+# Cada unidad de facción pertenece a uno de los 3 tipos de tropa del motor de combate
+# real (core/data_definitions.py: "soldado" = regular, "tanque" = pesada, "rapida" = rapida).
+TIPO_TROPA_A_GENERICO = {"regular": "soldado", "rapida": "rapida", "pesada": "tanque"}
+
+# Solo el nombre y el tipo de tropa de cada unidad cambian por facción (cosmético);
+# las estadísticas (costo/hp/daño/velocidad) vienen del catálogo genérico.
+_NOMBRES_POR_FACCION = {
+    "Madagascar": {"pinguino": "Penguin", "moto_moto": "Moto Moto", "pinguino_negro": "Black Penguin"},
+    "Argentina": {"messi": "Messi", "cerati": "Gustavo Cerati", "che": "El Che"},
+    "India": {"tech_support": "Tech Support", "taxi_driver": "Taxi Driver", "scammer": "Scammer"},
 }
+
+_TIPO_TROPA_POR_FACCION = {
+    "Madagascar": {"pinguino": "regular", "moto_moto": "pesada", "pinguino_negro": "rapida"},
+    "Argentina": {"messi": "rapida", "cerati": "regular", "che": "pesada"},
+    "India": {"tech_support": "pesada", "taxi_driver": "rapida", "scammer": "regular"},
+}
+
+UNIDADES_POR_FACCION = {}
+for _faccion in _NOMBRES_POR_FACCION:
+    UNIDADES_POR_FACCION[_faccion] = {}
+    _nombres = _NOMBRES_POR_FACCION[_faccion]
+    _tipos_tropa = _TIPO_TROPA_POR_FACCION[_faccion]
+    for _clave in _nombres:
+        _tipo_tropa = _tipos_tropa[_clave]
+        _clave_generica = TIPO_TROPA_A_GENERICO[_tipo_tropa]
+        _datos_genericos = UNITS_CATALOG[_clave_generica]
+        UNIDADES_POR_FACCION[_faccion][_clave] = {
+            "nombre": _nombres[_clave],
+            "tipo_tropa": _tipo_tropa,
+            "costo": _datos_genericos["coste"],
+            "hp": _datos_genericos["hp"],
+            "daño": _datos_genericos["daño"],
+            "velocidad": _datos_genericos["velocidad"],
+        }
 
 # Etiquetas de texto placeholder por unidad (se usan cuando no hay imagen)
 ETIQUETAS = {
     "pinguino": "PNG", "moto_moto": "MOTO", "pinguino_negro": "PNG2",
     "messi": "MESSI", "cerati": "CER", "che": "CHE",
     "tech_support": "TECH", "taxi_driver": "TAXI", "scammer": "SCAM",
+}
+
+# Texto corto que describe la habilidad de cada tipo de tropa
+# (mismo cooldown que su torre equivalente: 3 ataques para Reg, 2 para Fast y Heavy).
+HABILIDAD_UNIDAD = {
+    "regular": "double dmg \n every 3 hits",
+    "rapida": "double hit \n every 2 hits",
+    "pesada": "shield: halves \n next hit",
 }
 
 # Variables globales con el estado de la pantalla de ataque
@@ -220,6 +241,15 @@ def mostrar_mapa_atacante(root, img_fondo, faccion, faccion_defensor, dinero_ini
     tk.Label(frame, text=texto_tipos_tropa, font=("Courier New", 7, "bold"),
               bg="#111111", fg=COLOR_2, justify="left", padx=4, pady=4).place(x=ANCHO_MAPA - 10, y=90, anchor="ne")
 
+    # Panel con la informacion de la habilidad de cada tipo de tropa
+    # (debajo del panel de tipos de tropa, en el mismo margen de la derecha)
+    texto_habilidades = ("ABILITIES\n\n"
+                          "Reg:\n" + HABILIDAD_UNIDAD["regular"] + "\n\n"
+                          "Fast:\n" + HABILIDAD_UNIDAD["rapida"] + "\n\n"
+                          "Heavy:\n" + HABILIDAD_UNIDAD["pesada"])
+    tk.Label(frame, text=texto_habilidades, font=("Courier New", 7, "bold"),
+              bg="#111111", fg=COLOR_2, justify="left", padx=3, pady=4).place(x=ANCHO_MAPA - 10, y=280, anchor="ne")
+
     # Panel de compra
     Y_PANEL = GRID_Y + FILAS * CELDA + 8
     botones_ref = {}
@@ -295,7 +325,7 @@ def mostrar_mapa_atacante(root, img_fondo, faccion, faccion_defensor, dinero_ini
 
     # Botón terminar turno
     def terminar_turno():
-        on_turno_listo(unidades_colocadas)
+        on_turno_listo(unidades_colocadas, dinero_actual_atacante)
 
     tk.Button(frame, text="End Turn", font=FUENTE_BTN, bg=COLOR_VERDE, fg="#0A1628",
               relief="flat", cursor="hand2", padx=15, pady=5,

@@ -8,6 +8,11 @@ from PIL import Image, ImageTk
 UI_FOLDER = os.path.join(os.path.dirname(__file__), "ui")
 sys.path.insert(0, UI_FOLDER)
 
+# Lo mismo para core/: sus archivos se importan entre si con "from entities import ..."
+# en vez de "from core.entities import ...", asi que core tambien va al path.
+CORE_FOLDER = os.path.join(os.path.dirname(__file__), "core")
+sys.path.insert(0, CORE_FOLDER)
+
 # Todas las imagenes del juego estan guardadas en ui/imagenes
 IMAGENES_FOLDER = os.path.join(UI_FOLDER, "imagenes")
 
@@ -17,12 +22,15 @@ from ui.leaderboard_view import mostrar_leaderboard
 from ui.login_view import mostrar_login
 from ui.role_view import mostrar_seleccion_rol
 from ui.faction_view import mostrar_facciones
-from ui.defense_view import mostrar_mapa_defensor, TORRES, COOLDOWN_MAXIMO
-from ui.atacker_view import mostrar_mapa_atacante, UNIDADES_POR_FACCION, ETIQUETAS
+from ui.defense_view import mostrar_mapa_defensor
+from ui.atacker_view import mostrar_mapa_atacante, UNIDADES_POR_FACCION, ETIQUETAS, TIPO_TROPA_A_GENERICO
 from ui.combat_view import mostrar_combate
 
-DINERO_INICIAL = 200
-RONDAS_PARA_GANAR = 3
+from core.data_manager import actualizar_victoria
+from core.entities import Tower, Unidad, Pared, Base
+from core.data_definitions import TOWERS_CATALOG, UNITS_CATALOG
+from core.economy import COSTO_PARED, HP_PARED, DINERO_INICIAL, DINERO_POR_RONDA, RONDAS_PARA_GANAR
+from core.combat import CombatEngine
 
 # Variables globales con los datos de los dos jugadores
 jugador1_usuario = None
@@ -35,6 +43,11 @@ jugador2_faccion = None
 
 victorias_defensor = 0
 victorias_atacante = 0
+
+# Dinero del defensor y del atacante. Le pertenece al rol, no al jugador, porque el rol
+# de cada jugador no cambia durante la partida (solo cambia de ronda en ronda el mapa).
+dinero_defensor = DINERO_INICIAL
+dinero_atacante = DINERO_INICIAL
 
 
 def limpiar_pantalla(root):
@@ -56,6 +69,7 @@ def reiniciar_partida():
     global jugador1_usuario, jugador1_rol, jugador1_faccion
     global jugador2_usuario, jugador2_rol, jugador2_faccion
     global victorias_defensor, victorias_atacante
+    global dinero_defensor, dinero_atacante
 
     jugador1_usuario = None
     jugador1_rol = None
@@ -65,107 +79,50 @@ def reiniciar_partida():
     jugador2_faccion = None
     victorias_defensor = 0
     victorias_atacante = 0
+    dinero_defensor = DINERO_INICIAL
+    dinero_atacante = DINERO_INICIAL
 
 
-# Combate de relleno temporal hasta que Romu suba combat.py.
-# Solo hace avanzar las unidades en línea recta y resta vida a torres/muros/base.
-def simular_combate_temporal(objetos_defensa, unidades_ataque, faccion_atacante):
+# Construye las entidades reales del core (Tower/Pared/Unidad/Base) a partir de lo que
+# colocaron el defensor y el atacante en sus pantallas, y corre el motor de combate real.
+def ejecutar_combate_real(objetos_defensa, unidades_ataque, faccion_atacante):
     catalogo_unidades = UNIDADES_POR_FACCION[faccion_atacante]
 
     torres = []
-    muros = []
+    paredes = []
     for o in objetos_defensa:
         if o["tipo"] == "muro":
-            muros.append({"posicion": o["posicion"], "hp": MURO_HP, "hp_max": MURO_HP})
+            pared = Pared(coste=COSTO_PARED, hp=HP_PARED)
+            pared.position = o["posicion"]
+            paredes.append(pared)
         else:
-            datos = TORRES[o["tipo"]]
-            # "cooldown" cuenta los turnos hasta activar la habilidad de la torre.
-            # "lista" marca el turno exacto en el que la habilidad se activa
-            # (para que combat_view.py la haga "brillar" justo en ese frame).
-            torres.append({"tipo": o["tipo"], "posicion": o["posicion"], "hp": datos["hp"], "hp_max": datos["hp"],
-                           "cooldown": 0, "lista": False})
+            torre = Tower(**TOWERS_CATALOG[o["tipo"]])
+            torre.position = o["posicion"]
+            torre.tipo = o["tipo"]
+            torres.append(torre)
 
     unidades = []
     for u in unidades_ataque:
-        datos = catalogo_unidades[u["tipo"]]
-        etiqueta = ETIQUETAS.get(u["tipo"], "UNI")
-        unidades.append({
-            "tipo": u["tipo"], "etiqueta": etiqueta, "posicion": list(u["posicion"]),
-            "hp": datos["hp"], "hp_max": datos["hp"], "daño": datos["daño"],
-        })
+        tipo_tropa = catalogo_unidades[u["tipo"]]["tipo_tropa"]
+        clave_generica = TIPO_TROPA_A_GENERICO[tipo_tropa]
+        unidad = Unidad(**UNITS_CATALOG[clave_generica])
+        unidad.position = tuple(u["posicion"])
+        unidad.tipo = u["tipo"]
+        unidad.etiqueta = ETIQUETAS.get(u["tipo"], "UNI")
+        unidades.append(unidad)
 
-    base_hp = BASE_HP
-    frames = []
+    base = Base(hp=BASE_HP, position=(BASE_FILA, BASE_COL))
 
-    for _ in range(40):
-        for u in unidades:
-            if u["hp"] <= 0:
-                continue
-            f, c = u["posicion"]
-            bloqueado = False
-            for m in muros:
-                if m["posicion"] == (f, round(c) + 1) and m["hp"] > 0:
-                    m["hp"] = m["hp"] - u["daño"]
-                    bloqueado = True
-            for t in torres:
-                if t["posicion"] == (f, round(c) + 1) and t["hp"] > 0:
-                    t["hp"] = t["hp"] - u["daño"]
-                    bloqueado = True
-            if not bloqueado:
-                if round(c) >= BASE_COL:
-                    base_hp = base_hp - u["daño"]
-                else:
-                    u["posicion"][1] = u["posicion"][1] + 1
+    motor = CombatEngine(towers=torres, paredes=paredes, unidades=unidades, base=base)
+    frames, resultado_core = motor.ejecutar_ronda()
 
-        # Cada turno, las torres con vida avanzan el cooldown de su habilidad.
-        # Cuando llega al maximo, se reinicia y se marca "lista" por un solo
-        # turno; eso es lo que hace que combat_view.py la muestre brillando.
-        for t in torres:
-            if t["hp"] <= 0:
-                t["lista"] = False
-                continue
-            maximo = COOLDOWN_MAXIMO[t["tipo"]]
-            t["cooldown"] = t["cooldown"] + 1
-            if t["cooldown"] >= maximo:
-                t["cooldown"] = 0
-                t["lista"] = True
-            else:
-                t["lista"] = False
-
-        torres_copia = []
-        for t in torres:
-            torres_copia.append(dict(t))
-
-        muros_copia = []
-        for m in muros:
-            muros_copia.append(dict(m))
-
-        unidades_vivas = []
-        for u in unidades:
-            if u["hp"] > 0:
-                unidades_vivas.append(dict(u, posicion=tuple(u["posicion"])))
-
-        frames.append({
-            "torres": torres_copia,
-            "muros": muros_copia,
-            "unidades": unidades_vivas,
-            "base_hp": base_hp,
-        })
-
-        todas_muertas = True
-        for u in unidades:
-            if u["hp"] > 0:
-                todas_muertas = False
-
-        if base_hp <= 0 or todas_muertas:
-            break
-
-    if base_hp <= 0:
-        ganador = "atacante"
-    else:
-        ganador = "defensor"
-
-    return frames, {"ganador": ganador, "base_hp": base_hp}
+    resultado = {
+        "ganador": resultado_core["ganador"],
+        "base_hp": resultado_core["base_hp_restante"],
+        "dinero_defensor_ganado": resultado_core["dinero_defensor"],
+        "dinero_atacante_ganado": resultado_core["dinero_atacante"],
+    }
+    return frames, resultado
 
 
 def main():
@@ -271,6 +228,13 @@ def main():
 
     # Ronda: construir defensa, construir ataque, combate
     def iniciar_ronda():
+        global dinero_defensor, dinero_atacante
+
+        # Al inicio de cada ronda se suma una cantidad fija de dinero a ambos jugadores,
+        # encima de lo que ya tenian acumulado (ahorros de rondas anteriores).
+        dinero_defensor = dinero_defensor + DINERO_POR_RONDA
+        dinero_atacante = dinero_atacante + DINERO_POR_RONDA
+
         num_defensor = jugador_con_rol("defensor")
         num_atacante = jugador_con_rol("atacante")
 
@@ -286,11 +250,15 @@ def main():
 
         limpiar_pantalla(root)
 
-        def cuando_defensa_lista(objetos):
+        def cuando_defensa_lista(objetos, dinero_restante):
+            global dinero_defensor
+            # Lo que no se gastó construyendo no se pierde, pasa a la fase de ataque
+            # y a la próxima ronda como parte del dinero del defensor.
+            dinero_defensor = dinero_restante
             cuando_termina_defensa(objetos, faccion_defensor, faccion_atacante)
 
         mostrar_mapa_defensor(root, img_mapa_bg, None, faccion_defensor,
-                               dinero_inicial=DINERO_INICIAL,
+                               dinero_inicial=dinero_defensor,
                                on_turno_listo=cuando_defensa_lista,
                                faccion_atacante=faccion_atacante,
                                img_messi_arg=img_messi_arg, img_gustavo_arg=img_gustavo_arg, img_che_arg=img_che_arg,
@@ -302,11 +270,15 @@ def main():
     def cuando_termina_defensa(objetos_defensa, faccion_defensor, faccion_atacante):
         limpiar_pantalla(root)
 
-        def cuando_ataque_listo(unidades):
+        def cuando_ataque_listo(unidades, dinero_restante):
+            global dinero_atacante
+            # Lo que no se gastó comprando unidades no se pierde, queda guardado
+            # para sumarle lo que se gane en el combate de esta ronda.
+            dinero_atacante = dinero_restante
             cuando_termina_ataque(objetos_defensa, unidades, faccion_defensor, faccion_atacante)
 
         mostrar_mapa_atacante(root, img_mapa_bg, faccion_atacante, faccion_defensor,
-                               dinero_inicial=DINERO_INICIAL,
+                               dinero_inicial=dinero_atacante,
                                on_turno_listo=cuando_ataque_listo,
                                img_messi_arg=img_messi_arg, img_gustavo_arg=img_gustavo_arg, img_che_arg=img_che_arg,
                                img_pinguino_madag=img_pinguino_madag, img_moto_moto_madag=img_moto_moto_madag,
@@ -315,8 +287,16 @@ def main():
                                img_scammer_india=img_scammer_india)
 
     def cuando_termina_ataque(objetos_defensa, unidades_ataque, faccion_defensor, faccion_atacante):
-        # TODO: reemplazar por el motor real de core/combat.py cuando esté listo
-        frames, resultado = simular_combate_temporal(objetos_defensa, unidades_ataque, faccion_atacante)
+        global dinero_defensor, dinero_atacante
+
+        frames, resultado = ejecutar_combate_real(objetos_defensa, unidades_ataque, faccion_atacante)
+
+        # El defensor gana dinero por cada unidad enemiga eliminada, y el atacante gana
+        # dinero por el daño que le hizo a torres y a la base durante el combate. Ese
+        # dinero queda guardado para la proxima ronda.
+        dinero_defensor = dinero_defensor + resultado["dinero_defensor_ganado"]
+        dinero_atacante = dinero_atacante + resultado["dinero_atacante_ganado"]
+
         limpiar_pantalla(root)
         mostrar_combate(root, img_mapa_bg, None, faccion_defensor, frames, resultado,
                          img_messi_arg=img_messi_arg, img_gustavo_arg=img_gustavo_arg, img_che_arg=img_che_arg,
@@ -334,9 +314,19 @@ def main():
             victorias_atacante = victorias_atacante + 1
 
         if victorias_defensor >= RONDAS_PARA_GANAR or victorias_atacante >= RONDAS_PARA_GANAR:
+            registrar_victoria_partida(resultado["ganador"])
             mostrar_fin()
         else:
             iniciar_ronda()
+
+    # Guarda en data/players.json la victoria del jugador que ganó la partida completa
+    def registrar_victoria_partida(rol_ganador):
+        numero_ganador = jugador_con_rol(rol_ganador)
+        if numero_ganador == 1:
+            usuario_ganador = jugador1_usuario
+        else:
+            usuario_ganador = jugador2_usuario
+        actualizar_victoria(usuario_ganador, rol_ganador)
 
     # Fin de partida
     def mostrar_fin():

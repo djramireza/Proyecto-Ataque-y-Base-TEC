@@ -1,18 +1,23 @@
 import tkinter as tk
 from constantes import *
+from core.auth import iniciar_sesion, registrar_jugador
+from core.data_manager import obtener_jugador
 
 # Variable global que dice si estamos en modo "login" o modo "registro"
 modo = "login"
 
 
-# Funciones de login y registro (esto lo tiene que reemplazar Romu con las de core/auth.py)
-def mock_login(usuario, contrasena):
-    # Mock temporal: cualquier usuario y contraseña que no estén vacíos entran.
-    return True, {"victorias_defensor": 0, "victorias_atacante": 0}
+def hacer_login(usuario, contrasena):
+    ok, mensaje = iniciar_sesion(usuario, contrasena)
+    if not ok:
+        return False, mensaje
+    datos_jugador = obtener_jugador(usuario)
+    return True, {"victorias_defensor": datos_jugador["wins_defensor"],
+                  "victorias_atacante": datos_jugador["wins_atacante"]}
 
 
-def mock_registrar(usuario, contrasena):
-    return True, {"victorias_defensor": 0, "victorias_atacante": 0}
+def hacer_registro(usuario, contrasena):
+    return registrar_jugador(usuario, contrasena)
 
 
 def mostrar_login(root, img_fondo, on_success, numero_jugador=1):
@@ -83,7 +88,7 @@ def mostrar_login(root, img_fondo, on_success, numero_jugador=1):
             return
 
         if modo == "login":
-            ok, resultado = mock_login(usuario, contrasena)
+            ok, resultado = hacer_login(usuario, contrasena)
             if ok:
                 lbl_msg.config(text="Welcome, " + usuario + "!", fg=COLOR_VERDE)
                 resultado["usuario"] = usuario
@@ -95,7 +100,7 @@ def mostrar_login(root, img_fondo, on_success, numero_jugador=1):
             else:
                 lbl_msg.config(text=resultado, fg=COLOR_ROJO)
         else:
-            ok, resultado = mock_registrar(usuario, contrasena)
+            ok, resultado = hacer_registro(usuario, contrasena)
             if ok:
                 lbl_msg.config(text="Account created! Please log in.", fg=COLOR_VERDE)
                 frame.after(1000, cambiar_modo)
