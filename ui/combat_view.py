@@ -5,7 +5,7 @@ from defense_view import COOLDOWN_MAXIMO
 # Pantalla de combate.
 
 
-ETIQUETAS_TORRE = {"basica": "BAS", "pesada": "HEAV", "magica": "MAG"}
+ETIQUETAS_TORRE = {"basica": "🏯", "pesada": "🛡️", "magica": "✨"}
 
 # Variables globales con el estado de la animación
 indice_frame_actual = 0
@@ -117,7 +117,7 @@ def mostrar_combate(root, img_fondo, img_base, faccion_defensor, frames, resulta
             cx, cy = celda_centro(f, c)
             canvas.create_rectangle(cx - CELDA // 2, cy - CELDA // 2, cx + CELDA // 2, cy + CELDA // 2,
                                      fill=colores["muro"], outline="#FFFFFF", tags="combate")
-            canvas.create_text(cx, cy, text="WALL", font=("Arial", 9, "bold"),
+            canvas.create_text(cx, cy, text="🧱", font=("Segoe UI Emoji", 8),
                                 fill=color_de_texto(colores["muro"]), tags="combate")
             dibujar_barra_vida(cx, cy - CELDA // 2 + 3, muro["hp"], muro.get("hp_max", MURO_HP))
 
@@ -143,7 +143,7 @@ def mostrar_combate(root, img_fondo, img_base, faccion_defensor, frames, resulta
             canvas.create_rectangle(cx - CELDA // 2, cy - CELDA // 2, cx + CELDA // 2, cy + CELDA // 2,
                                      fill=fill_torre, outline=borde_color, width=borde_ancho, tags="combate")
             etiqueta = ETIQUETAS_TORRE.get(torre["tipo"], "TOR")
-            canvas.create_text(cx, cy, text=etiqueta, font=("Arial", 10, "bold"),
+            canvas.create_text(cx, cy, text=etiqueta, font=("Arial", 20, "bold"),
                                 fill=color_de_texto(fill_torre), tags="combate")
 
             # La barrita de cooldown va primero (mas arriba) y la de vida
