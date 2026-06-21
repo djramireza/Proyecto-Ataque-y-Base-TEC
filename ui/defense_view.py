@@ -36,7 +36,7 @@ tipo_seleccionado = None
 objetos_colocados = []
 
 
-def mostrar_mapa_defensor(root, img_fondo, img_base, faccion, dinero_inicial, on_turno_listo,
+def mostrar_mapa_defensor(root, img_fondo, faccion, dinero_inicial, on_turno_listo,
                            faccion_atacante=None,
                            img_messi_arg=None, img_gustavo_arg=None, img_che_arg=None,
                            img_pinguino_madag=None, img_moto_moto_madag=None, img_pinguino_negro_madag=None,
@@ -92,22 +92,21 @@ def mostrar_mapa_defensor(root, img_fondo, img_base, faccion, dinero_inicial, on
 
                 canvas.create_rectangle(x1, y1, x2, y2, fill=fill, outline="#FFFFFF", width=1, tags="mapa")
 
-                if contenido == "base" and img_base:
-                    canvas.create_image(cx, cy, image=img_base, tags="mapa")
-                elif contenido == "base":
+
+                if contenido == "base":
                     canvas.create_text(cx, cy, text="BASE", font=("Arial", 10, "bold"),
                                         fill=color_de_texto(fill), tags="mapa")
                 elif contenido == "muro":
-                    canvas.create_text(cx, cy, text="WALL", font=("Arial", 9, "bold"),
+                    canvas.create_text(cx, cy, text="🧱", font=("Segoe UI Emoji", 16),
                                         fill=color_de_texto(fill), tags="mapa")
                 elif contenido == "basica":
-                    canvas.create_text(cx, cy, text="BAS", font=("Arial", 10, "bold"),
+                    canvas.create_text(cx, cy, text="🏯", font=("Segoe UI Emoji", 16),
                                         fill=color_de_texto(fill), tags="mapa")
                 elif contenido == "pesada":
-                    canvas.create_text(cx, cy, text="HEAV", font=("Arial", 10, "bold"),
+                    canvas.create_text(cx, cy, text="🛡", font=("Segoe UI Emoji", 16),
                                         fill=color_de_texto(fill), tags="mapa")
                 elif contenido == "magica":
-                    canvas.create_text(cx, cy, text="MAG", font=("Arial", 10, "bold"),
+                    canvas.create_text(cx, cy, text="✨", font=("Segoe UI Emoji", 16),
                                         fill=color_de_texto(fill), tags="mapa")
 
     def click_celda(event):
