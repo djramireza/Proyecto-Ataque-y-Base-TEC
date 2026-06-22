@@ -1,7 +1,7 @@
 from entities import Tower, Unidad, Pared, Base
 from economy import BONUS_DESTRUIR_ESTRUCTURA, BONUS_ELIMINAR_UNIDAD
 
-MAX_TURNOS_POR_DEFECTO = 60
+MAX_TURNOS_POR_DEFECTO = 120
 
 
 class CombatEngine:
