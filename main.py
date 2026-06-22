@@ -257,7 +257,7 @@ def main():
             dinero_defensor = dinero_restante
             cuando_termina_defensa(objetos, faccion_defensor, faccion_atacante)
 
-        mostrar_mapa_defensor(root, img_mapa_bg, None, faccion_defensor,
+        mostrar_mapa_defensor(root, img_mapa_bg, faccion_defensor,
                                dinero_inicial=dinero_defensor,
                                on_turno_listo=cuando_defensa_lista,
                                faccion_atacante=faccion_atacante,
