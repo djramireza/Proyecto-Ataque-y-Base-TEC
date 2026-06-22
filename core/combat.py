@@ -2,7 +2,7 @@ from entities import Tower, Unidad, Pared, Base
 from economy import BONUS_DESTRUIR_ESTRUCTURA, BONUS_ELIMINAR_UNIDAD
 
 MAX_TURNOS_POR_DEFECTO = 120
-
+MAX_ACUMULAR_ATAQUE_DOBLE = 3
 
 class CombatEngine:
     def __init__(self, towers, paredes, unidades, base):#recibe listas de objetos: torres, paredes, unidades, y el objeto base
@@ -158,9 +158,11 @@ class CombatEngine:
                 break
 
     def _usar_habilidad_unidad(self, unidad, objetivo):
-        if unidad.habilidad == "ataque_doble":
-            # Regular: ataca con el doble de daño
-            self._atacar_normal(unidad, objetivo, unidad.daño * 2)
+        if unidad.habilidad == "ataque_doble": #Regular: Acumula un 2x cada 5 turnos en el ataque con un cap de 8x
+            if unidad.acumular_ataque_doble < MAX_ACUMULAR_ATAQUE_DOBLE:
+                unidad.daño = unidad.daño * 2   
+                unidad.acumular_ataque_doble += 1
+            self._atacar_normal(unidad, objetivo, unidad.daño)
 
         elif unidad.habilidad == "escudo":#Heavy: activa escudo temporal (recibe la mitad del daño)
             unidad.shield_activo = True
