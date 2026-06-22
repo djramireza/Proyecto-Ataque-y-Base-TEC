@@ -9,6 +9,7 @@ class Tower:
         self.habilidad = habilidad
         self.cooldown = cooldown  #turnos para activar habilidad
         self.cooldown_actual = 0
+        self.acumular_ataque_doble = 0
         self.position = None  #va a ser (fila, columna)
  
     def esta_vivo(self):
