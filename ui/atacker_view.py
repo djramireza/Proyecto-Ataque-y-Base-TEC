@@ -50,7 +50,7 @@ ETIQUETAS = {
 # Texto corto que describe la habilidad de cada tipo de tropa
 # (mismo cooldown que su torre equivalente: 3 ataques para Reg, 2 para Fast y Heavy).
 HABILIDAD_UNIDAD = {
-    "regular": "double dmg \n every 3 hits",
+    "regular": "doubles dmg \n every 5 hits",
     "rapida": "double hit \n every 2 hits",
     "pesada": "shield: halves \n next hit",
 }
